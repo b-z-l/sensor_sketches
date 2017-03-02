@@ -18,10 +18,10 @@
    7  -
    8  -
    9  -
-   10 - reserved for Sdfat
-   11 - reserved for Sdfat
-   12 - reserved for Sdfat
-   13 - reserved for Sdfat (LED power)
+   10 - reserved for SD * only on old Rev A adafruit loggers
+   11 - reserved for SD * only on old Rev A adafruit loggers
+   12 - reserved for SD * only on old Rev A adafruit loggers
+   13 - reserved for SD * (LED power)
 
    Analog Pins
    AO - CO - yellow
@@ -86,19 +86,20 @@
 // This new configuration will be recorded into the database.
 //
 
-const char CONFIG_DATE[12] = "2017-02-20";
-const int SENSOR_ID =           1;
-const int ENCLOSURE_ID =        1;
-const int ARDUINO_ID =          1;
-const int DATASHIELD_ID =       1;
-const int SDCARD_ID =           1;
-const int SHINYEI_ID =          1;
-const int O3_SENSOR_ID =        1;
-const int CO_SENSOR_ID =        1;
-const int DHT22_ID =            1;
+const char CONFIG_DATE[12] = "${a}";
+const int SENSOR_ID =           $ {b};
+const int ENCLOSURE_ID =        $ {c};
+const int ARDUINO_ID =          $ {d};
+const int DATASHIELD_ID =       $ {e};
+const int SDCARD_ID =           $ {m};
+const int SHINYEI_ID =          $ {j};
+const int O3_SENSOR_ID =        $ {f};
+const int CO_SENSOR_ID =        $ {h};
+const int DHT22_ID =            $ {l};
+const int BATTERY_ID =          $ {n};
 
 // logging options
-#define LOG_INTERVAL 2000
+#define LOG_INTERVAL 30000
 #define LOG_TO_SERIAL false
 
 // sleep and wake settings in milliseconds
@@ -121,7 +122,7 @@ SdFat sd;
 SdFile logfile;
 
 // DHT-22 Temp and Humidity
-#define DHTPIN 3
+#define DHTPIN 6
 DHT22 myDHT22(DHTPIN);
 
 //
@@ -132,8 +133,9 @@ enum Gases { CO, O3 };
 // Analog read pins
 #define CO_PIN 0
 #define O3_PIN 1
+
 // Shenyei PM variables
-#define PM_P2_PIN 4
+#define PM_P2_PIN 7
 unsigned long duration;
 unsigned long starttime;
 unsigned long sampletime_ms = 300000;   //300sec or 5min
@@ -341,8 +343,9 @@ void logSensorReadings() {
     float o3PPM = calculateGas(O3);
     float o3Volt = readVoltage(O3_PIN);
 
-    //////////////////////////////////////////////////////
-    //////////////////////////////////////////////////////
+    char datetime[25] = "";
+    sprintf(datetime, "%.4d-%.2d-%.2d %.2d:%.2d:%.2d", year, month, day, hour, minute, second);
+
     // Not an elegant solution, but an extensible one
     logfile.print(temp);
     logfile.print(", ");
@@ -360,10 +363,6 @@ void logSensorReadings() {
     logfile.print(", ");
     logfile.print(o3Volt);
     logfile.print(", ");
-
-    char datetime[25] = "";
-    sprintf(datetime, "%.4d-%.2d-%.2d %.2d:%.2d:%.2d", year, month, day, hour, minute, second);
-    
     logfile.println(datetime);
 
 #if LOG_TO_SERIAL
@@ -431,16 +430,16 @@ float calculateGas(int gas) {
   switch (gas) {
 
     case CO:
-      voltage = readVoltage(CO_PIN);
-      result = ((22.199 * voltage) - 16.394);              // CO_4 (1-00044) calibration equation (linear upto 2.64 v)
+      x = readVoltage(CO_PIN);
+      result = ${i};
       if (result < 0)
         result = 0;
       return result;
       break;
 
     case O3:
-      voltage = readVoltage(O3_PIN);
-      result = (176.75 * pow(2.71828, (-0.806 * voltage)));                // O3_4 (1-00034) calibration equation (exponential)
+      x = readVoltage(O3_PIN);
+      result = ${g};
       if (result < 0)
         result = 0;
       return result;
@@ -465,7 +464,8 @@ void calculatePM() {
     ratio = lowpulseoccupancy / (sampletime_ms * 10.0);
     PM25count = 1.1 * pow(ratio, 3) - 3.8 * pow(ratio, 2) + 520 * ratio + 0.62;
     // PM2.5 count (#/0.01ft3) to mass concentration (ug/m3) conversion
-    PM25conc = (0.2425 * pow(PM25count, 0.7726));                 // Shinyie_4 Equation (power function)
+    float x = PM25count;
+    PM25conc = ${k};                 // Shinyie_4 Equation (power function)
     lowpulseoccupancy = 0;
     starttime = millis();
   }
