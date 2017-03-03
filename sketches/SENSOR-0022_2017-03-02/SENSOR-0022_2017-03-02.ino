@@ -87,19 +87,19 @@
 //
 
 const char CONFIG_DATE[12] = "2017-03-02";
-const int SENSOR_ID =           9;
-const int ENCLOSURE_ID =        901;
-const int ARDUINO_ID =          902;
-const int DATASHIELD_ID =       903;
-const int SDCARD_ID =           908;
-const int SHINYEI_ID =          906;
-const int O3_SENSOR_ID =        904;
-const int CO_SENSOR_ID =        905;
-const int DHT22_ID =            907;
-const int BATTERY_ID =          909;
+const int SENSOR_ID =           22;
+const int ENCLOSURE_ID =        2201;
+const int ARDUINO_ID =          2202;
+const int DATASHIELD_ID =       2203;
+const int SDCARD_ID =           2208;
+const int SHINYEI_ID =          2206;
+const int O3_SENSOR_ID =        2204;
+const int CO_SENSOR_ID =        2205;
+const int DHT22_ID =            2207;
+const int BATTERY_ID =          2209;
 
 // logging options
-#define LOG_INTERVAL 10000
+#define LOG_INTERVAL 60000
 #define LOG_TO_SERIAL true
 
 // sleep and wake settings in milliseconds
@@ -107,8 +107,8 @@ const int BATTERY_ID =          909;
 //  30min = 1800000
 //  1hr = 3600000
 //  2hrs = 7200000
-#define WAKE_DURATION    120000
-#define SLEEP_DURATION   120000
+#define WAKE_DURATION    7200000
+#define SLEEP_DURATION   1800000
 
 #define MAX_SLEEP_ITERATIONS   SLEEP_DURATION / 8000
 int sleepIterations = MAX_SLEEP_ITERATIONS;
@@ -117,7 +117,7 @@ RTC_PCF8523 RTC;
 
 // Set SD pin
 #define chipSelect 10
-#define ledPin 13
+#define ledPin 2
 SdFat sd;
 SdFile logfile;
 
@@ -131,8 +131,8 @@ DHT dht(DHTPIN, DHT22);
 enum Gases { CO, O3 };
 
 // Analog read pins
-#define CO_PIN 0
-#define O3_PIN 1
+#define CO_PIN 1
+#define O3_PIN 0
 
 // Shenyei PM variables
 #define PM_P2_PIN 7
@@ -166,7 +166,7 @@ void setup() {
 #endif
   }
 
-  pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(ledPin, OUTPUT);
   pinMode(chipSelect, OUTPUT);
 
   // see if the card is present and can be initialized:
@@ -201,9 +201,9 @@ void setup() {
 #endif
   // flashing LED indicated success in writing to sd file
   for (int i = 0; i < 5; i++) {
-    digitalWrite(LED_BUILTIN, HIGH);
+    digitalWrite(ledPin, HIGH);
     delay(200);
-    digitalWrite(LED_BUILTIN, LOW);
+    digitalWrite(ledPin, LOW);
     delay(200);
   }
 
@@ -388,15 +388,6 @@ void logSensorReadings() {
     Serial.print(", ");
     Serial.println(datetime);
 #endif
-    /* char buf[100] = "";
-      sprintf(buf, " % -10d, % -10d, % -10d, % -10d, % -10d, % -10d, % -10d, % -10d, % .4d - % .2d - % .2d % .2d: % .2d",
-      temp, humid, PM25conc, PM25count, coPPM, coVolt, o3PPM, o3Volt, year, month, day, hour, minute);
-
-      logfile.println(buf);
-      #if LOG_TO_SERIAL
-      Serial.println(buf);
-      #endif
-    */
 
     // write to sd card
     logfile.flush();
@@ -435,7 +426,7 @@ float calculateGas(int gas) {
     float x;
     case CO:
       x = readVoltage(CO_PIN);
-      result = (9.7135*x)-14.039;
+      result = (8.4805*x)-9.7692;
       if (result < 0)
         result = 0;
       return result;
@@ -443,7 +434,7 @@ float calculateGas(int gas) {
 
     case O3:
       x = readVoltage(O3_PIN);
-      result = (-125.44*x)+477.58;
+      result = (-164.56*x)+643.16;
       if (result < 0)
         result = 0;
       return result;
@@ -469,7 +460,7 @@ void calculatePM() {
     PM25count = 1.1 * pow(ratio, 3) - 3.8 * pow(ratio, 2) + 520 * ratio + 0.62;
     // PM2.5 count (#/0.01ft3) to mass concentration (ug/m3) conversion
     float x = PM25count;
-    PM25conc = (0.0104*x)+11.899;                 // Shinyie_4 Equation (power function)
+    PM25conc = (0.0174*x)+5.5842;                 // Shinyie_4 Equation (power function)
     lowpulseoccupancy = 0;
     starttime = millis();
   }
@@ -484,10 +475,10 @@ void fatalBlink() {
   while (1) {
     delay(1000);
     for (int i = 0; i < 10; i++) {
-      digitalWrite(LED_BUILTIN, HIGH);
-      delay(100);
-      digitalWrite(LED_BUILTIN, LOW);
-      delay(100);
+      digitalWrite(ledPin, HIGH);
+      delay(50);
+      digitalWrite(ledPin, LOW);
+      delay(50);
     }
   }
 }

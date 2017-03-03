@@ -87,16 +87,16 @@
 //
 
 const char CONFIG_DATE[12] = "2017-03-02";
-const int SENSOR_ID =           35;
-const int ENCLOSURE_ID =        3501;
-const int ARDUINO_ID =          3502;
-const int DATASHIELD_ID =       3503;
-const int SDCARD_ID =           3508;
-const int SHINYEI_ID =          3506;
-const int O3_SENSOR_ID =        3504;
-const int CO_SENSOR_ID =        3505;
-const int DHT22_ID =            3507;
-const int BATTERY_ID =          3509;
+const int SENSOR_ID =           14;
+const int ENCLOSURE_ID =        1401;
+const int ARDUINO_ID =          1402;
+const int DATASHIELD_ID =       1403;
+const int SDCARD_ID =           1408;
+const int SHINYEI_ID =          1406;
+const int O3_SENSOR_ID =        1404;
+const int CO_SENSOR_ID =        1405;
+const int DHT22_ID =            1407;
+const int BATTERY_ID =          1409;
 
 // logging options
 #define LOG_INTERVAL 60000
@@ -426,7 +426,7 @@ float calculateGas(int gas) {
     float x;
     case CO:
       x = readVoltage(CO_PIN);
-      result = (8.1221*x)-10.497;
+      result = (9.7973*x)-16.286;
       if (result < 0)
         result = 0;
       return result;
@@ -434,7 +434,7 @@ float calculateGas(int gas) {
 
     case O3:
       x = readVoltage(O3_PIN);
-      result = (-119.9*x)+459.58;
+      result = (-186.87*x)+762.88;
       if (result < 0)
         result = 0;
       return result;
@@ -460,7 +460,7 @@ void calculatePM() {
     PM25count = 1.1 * pow(ratio, 3) - 3.8 * pow(ratio, 2) + 520 * ratio + 0.62;
     // PM2.5 count (#/0.01ft3) to mass concentration (ug/m3) conversion
     float x = PM25count;
-    PM25conc = (0.0146*x)+3.8385;                 // Shinyie_4 Equation (power function)
+    PM25conc = (0.0114*x)+7.318;                 // Shinyie_4 Equation (power function)
     lowpulseoccupancy = 0;
     starttime = millis();
   }

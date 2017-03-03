@@ -99,7 +99,7 @@ const int DHT22_ID =            ${l};
 const int BATTERY_ID =          ${n};
 
 // logging options
-#define LOG_INTERVAL 10000
+#define LOG_INTERVAL 60000
 #define LOG_TO_SERIAL true
 
 // sleep and wake settings in milliseconds
@@ -107,8 +107,8 @@ const int BATTERY_ID =          ${n};
 //  30min = 1800000
 //  1hr = 3600000
 //  2hrs = 7200000
-#define WAKE_DURATION    120000
-#define SLEEP_DURATION   120000
+#define WAKE_DURATION    7200000
+#define SLEEP_DURATION   1800000
 
 #define MAX_SLEEP_ITERATIONS   SLEEP_DURATION / 8000
 int sleepIterations = MAX_SLEEP_ITERATIONS;
@@ -117,7 +117,7 @@ RTC_PCF8523 RTC;
 
 // Set SD pin
 #define chipSelect 10
-#define ledPin 13
+#define ledPin 2
 SdFat sd;
 SdFile logfile;
 
@@ -166,7 +166,7 @@ void setup() {
 #endif
   }
 
-  pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(ledPin, OUTPUT);
   pinMode(chipSelect, OUTPUT);
 
   // see if the card is present and can be initialized:
@@ -201,9 +201,9 @@ void setup() {
 #endif
   // flashing LED indicated success in writing to sd file
   for (int i = 0; i < 5; i++) {
-    digitalWrite(LED_BUILTIN, HIGH);
+    digitalWrite(ledPin, HIGH);
     delay(200);
-    digitalWrite(LED_BUILTIN, LOW);
+    digitalWrite(ledPin, LOW);
     delay(200);
   }
 
@@ -475,9 +475,9 @@ void fatalBlink() {
   while (1) {
     delay(1000);
     for (int i = 0; i < 10; i++) {
-      digitalWrite(LED_BUILTIN, HIGH);
+      digitalWrite(ledPin, HIGH);
       delay(50);
-      digitalWrite(LED_BUILTIN, LOW);
+      digitalWrite(ledPin, LOW);
       delay(50);
     }
   }
