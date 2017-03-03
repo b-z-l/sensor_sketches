@@ -86,17 +86,17 @@
 // This new configuration will be recorded into the database.
 //
 
-const char CONFIG_DATE[12] = "${a}";
-const int SENSOR_ID =           ${b};
-const int ENCLOSURE_ID =        ${c};
-const int ARDUINO_ID =          ${d};
-const int DATASHIELD_ID =       ${e};
-const int SDCARD_ID =           ${m};
-const int SHINYEI_ID =          ${j};
-const int O3_SENSOR_ID =        ${f};
-const int CO_SENSOR_ID =        ${h};
-const int DHT22_ID =            ${l};
-const int BATTERY_ID =          ${n};
+const char CONFIG_DATE[12] = "2017-03-02";
+const int SENSOR_ID =           9;
+const int ENCLOSURE_ID =        901;
+const int ARDUINO_ID =          902;
+const int DATASHIELD_ID =       903;
+const int SDCARD_ID =           908;
+const int SHINYEI_ID =          906;
+const int O3_SENSOR_ID =        904;
+const int CO_SENSOR_ID =        905;
+const int DHT22_ID =            907;
+const int BATTERY_ID =          909;
 
 // logging options
 #define LOG_INTERVAL 10000
@@ -131,8 +131,8 @@ DHT dht(DHTPIN, DHT22);
 enum Gases { CO, O3 };
 
 // Analog read pins
-#define CO_PIN 1
-#define O3_PIN 0
+#define CO_PIN 0
+#define O3_PIN 1
 
 // Shenyei PM variables
 #define PM_P2_PIN 7
@@ -388,6 +388,15 @@ void logSensorReadings() {
     Serial.print(", ");
     Serial.println(datetime);
 #endif
+    /* char buf[100] = "";
+      sprintf(buf, " % -10d, % -10d, % -10d, % -10d, % -10d, % -10d, % -10d, % -10d, % .4d - % .2d - % .2d % .2d: % .2d",
+      temp, humid, PM25conc, PM25count, coPPM, coVolt, o3PPM, o3Volt, year, month, day, hour, minute);
+
+      logfile.println(buf);
+      #if LOG_TO_SERIAL
+      Serial.println(buf);
+      #endif
+    */
 
     // write to sd card
     logfile.flush();
@@ -426,7 +435,7 @@ float calculateGas(int gas) {
     float x;
     case CO:
       x = readVoltage(CO_PIN);
-      result = ${i};
+      result = (9.7135*x)-14.039;
       if (result < 0)
         result = 0;
       return result;
@@ -434,7 +443,7 @@ float calculateGas(int gas) {
 
     case O3:
       x = readVoltage(O3_PIN);
-      result = ${g};
+      result = (-125.44*x)+477.58;
       if (result < 0)
         result = 0;
       return result;
@@ -460,7 +469,7 @@ void calculatePM() {
     PM25count = 1.1 * pow(ratio, 3) - 3.8 * pow(ratio, 2) + 520 * ratio + 0.62;
     // PM2.5 count (#/0.01ft3) to mass concentration (ug/m3) conversion
     float x = PM25count;
-    PM25conc = ${k};                 // Shinyie_4 Equation (power function)
+    PM25conc = (0.0104*x)+11.899;                 // Shinyie_4 Equation (power function)
     lowpulseoccupancy = 0;
     starttime = millis();
   }
@@ -476,9 +485,9 @@ void fatalBlink() {
     delay(1000);
     for (int i = 0; i < 10; i++) {
       digitalWrite(LED_BUILTIN, HIGH);
-      delay(50);
+      delay(100);
       digitalWrite(LED_BUILTIN, LOW);
-      delay(50);
+      delay(100);
     }
   }
 }
