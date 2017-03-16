@@ -65,7 +65,6 @@
 */
 #include <Wire.h>
 #include <SPI.h>
-#include <SoftwareSerial.h>
 #include "DHT.h"
 #include "FreeStack.h"
 #include "SdFat.h"
@@ -113,11 +112,16 @@ const int BATTERY_ID =          1909;
 #define MAX_SLEEP_ITERATIONS   SLEEP_DURATION / 8000
 int sleepIterations = MAX_SLEEP_ITERATIONS;
 
+// pin to switch transistor for power down everything entering sleep state
+#define transPin 2
+
 RTC_PCF8523 RTC;
 
 // Set SD pin
 #define chipSelect 10
-#define ledPin 13
+
+#define ledPin 3
+
 SdFat sd;
 SdFile logfile;
 
@@ -166,9 +170,9 @@ void setup() {
 #endif
   }
 
-  pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(ledPin, OUTPUT);
   pinMode(chipSelect, OUTPUT);
-
+  pinMode(transPin, OUTPUT);
   // see if the card is present and can be initialized:
   if (!sd.begin(chipSelect)) {
 #if LOG_TO_SERIAL
@@ -201,9 +205,9 @@ void setup() {
 #endif
   // flashing LED indicated success in writing to sd file
   for (int i = 0; i < 5; i++) {
-    digitalWrite(LED_BUILTIN, HIGH);
+    digitalWrite(ledPin, HIGH);
     delay(200);
-    digitalWrite(LED_BUILTIN, LOW);
+    digitalWrite(ledPin, LOW);
     delay(200);
   }
 
@@ -304,6 +308,7 @@ void loop() {
     if (sleepIterations >= MAX_SLEEP_ITERATIONS) {
       // Reset the number of sleep iterations.
       sleepIterations = 0;
+      digitalWrite(transPin, HIGH);
 
       // reset lastSleepCycle if it wraps around
       if (lastSleepCycle > millis())  lastSleepCycle = millis();
@@ -314,6 +319,7 @@ void loop() {
       }
     }
     // Go to sleep!
+    digitalWrite(transPin, LOW);
     sleep();
     lastSleepCycle = millis();
   }
@@ -475,9 +481,9 @@ void fatalBlink() {
   while (1) {
     delay(1000);
     for (int i = 0; i < 10; i++) {
-      digitalWrite(LED_BUILTIN, HIGH);
+      digitalWrite(ledPin, HIGH);
       delay(50);
-      digitalWrite(LED_BUILTIN, LOW);
+      digitalWrite(ledPin, LOW);
       delay(50);
     }
   }
