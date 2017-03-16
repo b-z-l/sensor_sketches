@@ -1,0 +1,50 @@
+#!/bin/bash
+
+sensornumber=$(printf "%04d" $2)
+sketchname=SENSOR-"$sensornumber"_$1
+
+mkdir /home/ben/sensor_sketch/sketches/$sketchname
+
+sed -e "s/\${a}/$1/" -e "s/\${b}/$2/" -e "s/\${c}/$3/" -e "s/\${d}/$4/" -e "s/\${e}/$5/" -e "s/\${f}/$6/" -e "s/\${g}/$7/" -e "s/\${h}/$8/" -e "s/\${i}/$9/" -e "s/\${j}/${10}/" -e "s/\${k}/${11}/" -e "s/\${l}/${12}/" -e "s/\${m}/${13}/" -e "s/\${n}/${14}/" /home/ben/sensor_sketch/transistor_sketch/transistor_sketch.ino > /home/ben/sensor_sketch/sketches/$sketchname/$sketchname.ino
+
+if [ $? -eq 0 ]; then
+	echo
+	echo $sketchname.ino created
+	echo
+	echo WIPING SD CARD
+	echo
+
+	/home/ben/Downloads/arduino-nightly/arduino --upload --board arduino:avr:uno --port /dev/ttyUSB0 /home/ben/sensor_sketch/wipe/wipe.ino
+
+	sleep 3
+
+	echo
+	echo UPLOADING RTC CODE
+	echo
+
+	/home/ben/Downloads/arduino-nightly/arduino --upload --board arduino:avr:uno --port /dev/ttyUSB0 /home/ben/pcf8523/pcf8523.ino
+
+	if [ $? -eq 0 ]; then
+		echo RTC UPLOADED
+	else
+		echo RTC FAILURE
+	fi
+	sleep 3
+
+	echo
+	echo UPLOADING TO SENSOR $2
+	echo
+
+	/home/ben/Downloads/arduino-nightly/arduino --upload --board arduino:avr:uno --port /dev/ttyUSB0 /home/ben/sensor_sketch/sketches/$sketchname/$sketchname.ino
+
+	if [ $? -eq 0 ]; then
+		echo SUCCESS FOR SENSOR $2
+	else
+		echo FAILURE
+	fi
+
+else
+	echo FAILED TO CREATE SENSOR SKETCH
+fi
+
+
