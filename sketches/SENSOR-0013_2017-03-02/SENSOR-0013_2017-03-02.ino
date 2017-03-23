@@ -65,7 +65,6 @@
 */
 #include <Wire.h>
 #include <SPI.h>
-#include <SoftwareSerial.h>
 #include "DHT.h"
 #include "FreeStack.h"
 #include "SdFat.h"
@@ -113,11 +112,16 @@ const int BATTERY_ID =          1309;
 #define MAX_SLEEP_ITERATIONS   SLEEP_DURATION / 8000
 int sleepIterations = MAX_SLEEP_ITERATIONS;
 
+// pin to switch transistor for power down everything entering sleep state
+#define transPin 2
+
 RTC_PCF8523 RTC;
 
 // Set SD pin
 #define chipSelect 10
-#define ledPin 2
+
+#define ledPin 3
+
 SdFat sd;
 SdFile logfile;
 
@@ -168,7 +172,7 @@ void setup() {
 
   pinMode(ledPin, OUTPUT);
   pinMode(chipSelect, OUTPUT);
-
+  pinMode(transPin, OUTPUT);
   // see if the card is present and can be initialized:
   if (!sd.begin(chipSelect)) {
 #if LOG_TO_SERIAL
@@ -304,6 +308,7 @@ void loop() {
     if (sleepIterations >= MAX_SLEEP_ITERATIONS) {
       // Reset the number of sleep iterations.
       sleepIterations = 0;
+      digitalWrite(transPin, HIGH);
 
       // reset lastSleepCycle if it wraps around
       if (lastSleepCycle > millis())  lastSleepCycle = millis();
@@ -314,6 +319,7 @@ void loop() {
       }
     }
     // Go to sleep!
+    digitalWrite(transPin, LOW);
     sleep();
     lastSleepCycle = millis();
   }
