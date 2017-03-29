@@ -117,7 +117,8 @@ RTC_PCF8523 RTC;
 
 // Set SD pin
 #define chipSelect 10
-#define ledPin 2
+#define ledPin 3
+
 SdFat sd;
 SdFile logfile;
 
