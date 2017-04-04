@@ -64,6 +64,7 @@
 
 */
 #include <Wire.h>
+#include "LowPower.h"
 #include <SPI.h>
 #include "DHT.h"
 #include "FreeStack.h"
@@ -109,11 +110,12 @@ const int BATTERY_ID =          ${n};
 #define WAKE_DURATION    3600000
 #define SLEEP_DURATION   1800000
 
-#define MAX_SLEEP_ITERATIONS   SLEEP_DURATION / 8000
-int sleepIterations = MAX_SLEEP_ITERATIONS;
+// calculate number of sleep cycles based on 8 second sleep intervals
+// you shouldn't need to touch this
+#define SLEEP_CYCLES   SLEEP_DURATION / 8000
 
 // pin to switch transistor for power down everything entering sleep state
-#define transPin 2
+#define transistor_pin 2
 
 RTC_PCF8523 RTC;
 
@@ -152,8 +154,6 @@ float PM25conc;
 uint32_t timer = millis();
 uint32_t lastSleepCycle = millis();
 
-volatile bool watchdogActivated = false;
-
 void setup() {
 
 #if LOG_TO_SERIAL
@@ -172,7 +172,7 @@ void setup() {
 
   pinMode(ledPin, OUTPUT);
   pinMode(chipSelect, OUTPUT);
-  pinMode(transPin, OUTPUT);
+  pinMode(transistor_pin, OUTPUT);
   // see if the card is present and can be initialized:
   if (!sd.begin(chipSelect)) {
 #if LOG_TO_SERIAL
@@ -215,19 +215,6 @@ void setup() {
 
   pinMode(PM_P2_PIN, INPUT);
   starttime = millis();
-
-  // Watchdog timer setup for waking from sleep
-  noInterrupts();
-  // Set the watchdog reset bit in the MCU status register to 0.
-  MCUSR &= ~(1 << WDRF);
-  // Set WDCE and WDE bits in the watchdog control register.
-  WDTCSR |= (1 << WDCE) | (1 << WDE);
-  // Set watchdog clock prescaler bits to a value of 8 seconds.
-  WDTCSR = (1 << WDP0) | (1 << WDP3);
-  // Enable watchdog as interrupt only (no reset).
-  WDTCSR |= (1 << WDIE);
-  // Enable interrupts again.
-  interrupts();
 
   //
   // File headers
@@ -297,43 +284,39 @@ void setup() {
 #endif
 }
 
-void loop() {
-  // Don't do anything unless the watchdog timer interrupt has fired.
-  if (watchdogActivated)
+void loop() 
+{
+ // Wake cycle
+  logSensorReadings();
+  
+  // Sleep cycle
+  if (millis() - lastSleepCycle > WAKE_DURATION)
   {
-    watchdogActivated = false;
-    // Increase the count of sleep iterations and take a sensor
-    // reading once the max number of iterations has been hit.
-    sleepIterations += 1;
-    if (sleepIterations >= MAX_SLEEP_ITERATIONS) {
-      // Reset the number of sleep iterations.
-      sleepIterations = 0;
-      digitalWrite(transPin, HIGH);
-
-      // reset lastSleepCycle if it wraps around
-      if (lastSleepCycle > millis())  lastSleepCycle = millis();
-
-      // Log sensor readings umtil WAKE_DURATION has ellapsed, don't delete this Filimon!
-      while (millis() - lastSleepCycle < WAKE_DURATION) {
-        logSensorReadings();
+    digitalWrite(transistor_pin, LOW);
+    for (int i = 0; i < SLEEP_CYCLES; i++)
+    {
+      LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
+      // keep battery alive if 96 seconds have elapsed
+      if ((i % 12) == 0)
+      {
+        digitalWrite(transistor_pin, HIGH);
+        delay(20);
+        digitalWrite(transistor_pin, LOW);
       }
     }
-    // Go to sleep!
-    digitalWrite(transPin, LOW);
-    sleep();
+    digitalWrite(transistor_pin, HIGH);
     lastSleepCycle = millis();
   }
 }
 
-
 void logSensorReadings() {
-  if (timer > millis())  timer = millis();
 
+  if (timer > millis())  timer = millis();
   // run Shinyei PM calculations
   calculatePM();
 
   if (millis() - timer > LOG_INTERVAL) {
-    timer = millis(); // reset the timer
+    timer = millis();
 
     DateTime now = RTC.now();
     int year = now.year();
@@ -487,38 +470,4 @@ void fatalBlink() {
       delay(50);
     }
   }
-}
-
-//
-// Define watchdog timer interrupt.
-//
-ISR(WDT_vect)
-{
-  // Set the watchdog activated flag.
-  // Note that you shouldn't do much work inside an interrupt handler.
-  watchdogActivated = true;
-}
-
-//
-// sleep
-//
-// Put the Arduino to sleep.
-void sleep()
-{
-  // Set sleep to full power down.  Only external interrupts or
-  // the watchdog timer can wake the CPU!
-  set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-
-  // Turn off the ADC while asleep.
-  power_adc_disable();
-
-  // Enable sleep and enter sleep mode.
-  sleep_mode();
-
-  // CPU is now asleep and program execution completely halts!
-  // Once awake, execution will resume at this point.
-
-  // When awake, disable sleep mode and turn on all devices.
-  sleep_disable();
-  power_all_enable();
 }
