@@ -1,0 +1,5 @@
+#!/bin/bash
+
+sudo mount -t vfat /dev/mmcblk0p1 /mnt/SD/
+sudo mv /mnt/SD/*.txt $(pwd)/data_dump/
+sudo umount /dev/mmcblk0p1
