@@ -1,0 +1,3 @@
+let "linenum=${1}+1"
+args=$(sed "${linenum}q;d" $(pwd)/sensor_upload_datas)
+$(pwd)/upload_transistor ${args}

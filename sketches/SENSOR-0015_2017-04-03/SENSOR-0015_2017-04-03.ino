@@ -85,17 +85,17 @@
 // This new configuration will be recorded into the database.
 //
 
-const char CONFIG_DATE[12] = "${a}";
-const int SENSOR_ID =           ${b};
-const int ENCLOSURE_ID =        ${c};
-const int ARDUINO_ID =          ${d};
-const int DATASHIELD_ID =       ${e};
-const int SDCARD_ID =           ${m};
-const int SHINYEI_ID =          ${j};
-const int O3_SENSOR_ID =        ${f};
-const int CO_SENSOR_ID =        ${h};
-const int DHT22_ID =            ${l};
-const int BATTERY_ID =          ${n};
+const char CONFIG_DATE[12] = "2017-04-03";
+const int SENSOR_ID =           15;
+const int ENCLOSURE_ID =        1501;
+const int ARDUINO_ID =          1502;
+const int DATASHIELD_ID =       1503;
+const int SDCARD_ID =           1508;
+const int SHINYEI_ID =          1506;
+const int O3_SENSOR_ID =        1504;
+const int CO_SENSOR_ID =        1505;
+const int DHT22_ID =            1507;
+const int BATTERY_ID =          1509;
 
 // logging options
 #define LOG_INTERVAL 60000
@@ -432,7 +432,7 @@ float calculateGas(int gas) {
     float x;
     case CO:
       x = readVoltage(CO_PIN);
-      result = ${i};
+      result = (10.157*x)-14.132;
       if (result < 0)
         result = 0;
       return result;
@@ -440,7 +440,7 @@ float calculateGas(int gas) {
 
     case O3:
       x = readVoltage(O3_PIN);
-      result = ${g};
+      result = (-78.871*x)+301.97;
       if (result < 0)
         result = 0;
       return result;
@@ -466,7 +466,7 @@ void calculatePM() {
     PM25count = 1.1 * pow(ratio, 3) - 3.8 * pow(ratio, 2) + 520 * ratio + 0.62;
     // PM2.5 count (#/0.01ft3) to mass concentration (ug/m3) conversion
     float x = PM25count;
-    PM25conc = ${k};                 // Shinyie_4 Equation (power function)
+    PM25conc = (0.0181*x)+3.9598;                 // Shinyie_4 Equation (power function)
     lowpulseoccupancy = 0;
     starttime = millis();
   }
